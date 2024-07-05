@@ -11,7 +11,22 @@ class Author(db.Model):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
-    # Add validators 
+    # Add validators
+    @validates('name')
+    def validate_name(self, key, name):
+        if not name:
+            raise ValueError('Name cannot be empty.')
+        author = db.session.query(Author.id).filter_by(name=name).first()
+        if author is not None:
+            raise ValueError('Name must be unique.')
+        return name
+
+    @validates('phone_number')
+    def validate_phone_number(self, key, phone_number):
+        if not phone_number.isdigit() or len(phone_number) != 10:
+            raise ValueError('Phone number must be a 10-digit number.')
+        return phone_number
+    
 
     def __repr__(self):
         return f'Author(id={self.id}, name={self.name})'
@@ -27,7 +42,31 @@ class Post(db.Model):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
-    # Add validators  
+    # Add validators
+    @validates('summary')
+    def validate_summary(self, key, summary):
+        if len(summary) > 250:
+            raise ValueError('Summary cannot be more than 250 characters.')
+        return summary
+
+    @validates('content')
+    def validate_content(self, key, content):
+        if len(content) < 250:
+            raise ValueError('Content must be at least 250 characters.')
+        return content
+    
+    @validates('category')
+    def validate_category(self, key, category):
+        if category not in ['Fiction', 'Non-Fiction']:
+            raise ValueError('Category must be either Fiction or Non-Fiction.')
+        return category
+    
+    @validates('title')
+    def validate_title(self, key, title):
+        clickbait = ["Won't Believe", "Secret", "Top", "Guess"]
+        if not any(substring in title for substring in clickbait):
+            raise ValueError('Title must contain at least one clickbait phrase.')
+        return title
 
 
     def __repr__(self):
